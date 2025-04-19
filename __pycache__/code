@@ -1,0 +1,56 @@
+import os
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Step 1: Path Setup
+train_dir = 'dataset/train'
+val_dir = 'dataset/val'
+
+# Step 2: Image Preprocessing
+train_datagen = ImageDataGenerator(rescale=1./255)
+val_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=(64, 64),
+    batch_size=32,
+    class_mode='categorical'
+)
+
+val_generator = val_datagen.flow_from_directory(
+    val_dir,
+    target_size=(64, 64),
+    batch_size=32,
+    class_mode='categorical'
+)
+
+# Step 3: CNN Model
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3)),
+    MaxPooling2D(pool_size=(2, 2)),
+
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D(pool_size=(2, 2)),
+
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(train_generator.num_classes, activation='softmax')
+])
+
+# Step 4: Compile the Model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Step 5: Train the Model
+model.fit(
+    train_generator,
+    epochs=10,
+    validation_data=val_generator
+)
+
+# Step 6: Save the Model
+model.save('hand_gesture_model.h5')
+
+print("✅ Model trained and saved as 'hand_gesture_model.h5'")
